@@ -28,12 +28,22 @@ Alternatively you can import just the aar file:
 
    `$ git clone https://github.com/defacto133/MultiLevelExpandableIndentableListView.git`
 
-2. `$ cd MultiLevelExpandableIndentableListView/`
+2. cd to the direcotry created
+
+   `$ cd MultiLevelExpandableIndentableListView/`
+   
 3. Set a variable with the path to the Android SDK
-`$ export ANDROID_HOME=<path-to-andoid-sdk>`
+
+   `$ export ANDROID_HOME=<path-to-andoid-sdk>`
+
 4. Build the project
+
     `$ ./gradlew build`
-This will make multilevelexpindlistview-release.aar in  \<path-to-cloned-repo\>/MultiLevelExpandableIndentableListView/multilevelexpindlistview/build/outputs/aar/
+
+    This will make multilevelexpindlistview-release.aar in
+    
+    \<path-to-cloned-repo\>/MultiLevelExpandableIndentableListView/multilevelexpindlistview/build/outputs/aar/
+
 5. In Android Studio open the Module Settings (press F4)
 6. Click on the top left green arrow to add an new module
 7. Select "Import .JAR or .AAR Package" and select the .aar file from step 4
