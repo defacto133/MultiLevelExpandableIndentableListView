@@ -33,11 +33,11 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
     /**
      * View type of a single item.
      */
-    private static final int VIEW_TYPE_ITEM = 0;
+    public static final int VIEW_TYPE_ITEM = 0;
     /**
      * View type of a group of items and/or groups.
      */
-    private static final int VIEW_TYPE_GROUP = 1;
+    public static final int VIEW_TYPE_GROUP = 1;
 
     private final Context mContext;
     /**
@@ -153,7 +153,7 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
 
     /**
      *
-     * @param context
+     * @param context The current context.
      * @param resourceItem Resource identifier of a view layout that defines the views for
      *                     this list items. The layout file should include at least
      *                     those named views defined in "toI"
@@ -179,6 +179,16 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
         mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         if (sGroups == null)
             sGroups = new HashMap<ExpIndData, List<? extends ExpIndData>>();
+        if (sData == null) {
+            sData = new ArrayList<ExpIndData>();
+        }
+    }
+
+    public void add(ExpIndData item) {
+        if (sData == null) {
+            sData = new ArrayList<ExpIndData>();
+        }
+        sData.add(item);
     }
 
     public void addAll(List<? extends ExpIndData> data) {
@@ -188,8 +198,25 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
             sData.addAll(data);
     }
 
+    public void clear() {
+        sData.clear();
+        sGroups.clear();
+    }
+
+    public void insert(ExpIndData item, int index) {
+        sData.add(index, item);
+    }
+
+    public void remove(ExpIndData item) {
+        sData.remove(item);
+        if (sGroups.containsKey(item))
+            sGroups.remove(item);
+    }
+
     @Override
     public int getCount() {
+        if (sData == null)
+            return 0;
         return sData.size();
     }
 
@@ -218,7 +245,7 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
         View view;
 
         if (convertView == null) {
-            int resource = -1;
+            int resource;
             switch (getItemViewType(i)) {
                 case VIEW_TYPE_ITEM:
                     resource = mResourceItem;
@@ -411,11 +438,9 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
         }
 
         // get the group of the descendants of firstItem
-        List<? extends ExpIndData> group = sGroups.get(getItem(position));
+        List<? extends ExpIndData> group = sGroups.remove(firstItem);
 
         sData.addAll(position + 1, group);
-
-        sGroups.remove(firstItem);
 
         firstItem.setIsGroup(false);
         firstItem.setGroupSize(0);
