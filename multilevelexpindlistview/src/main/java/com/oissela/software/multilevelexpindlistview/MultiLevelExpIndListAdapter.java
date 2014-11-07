@@ -490,7 +490,7 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
     public void collapseGroup(int position) {
         ExpIndData firstItem = getItem(position);
 
-        if (firstItem.getChildren().isEmpty())
+        if (firstItem.getChildren() == null || firstItem.getChildren().isEmpty())
             return;
 
         // group containing all the descendants of firstItem
