@@ -13,6 +13,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +39,12 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
      * View type of a group of items and/or groups.
      */
     public static final int VIEW_TYPE_GROUP = 1;
+
+    /**
+     * Indicates whether or not {@link #notifyDataSetChanged()} must be called whenever
+     * {@link #sData} is modified.
+     */
+    private boolean mNotifyOnChange = true;
 
     private final Context mContext;
     /**
@@ -80,7 +87,7 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
     private ViewBinder mItemViewBinder;
     private ViewBinder mGroupViewBinder;
     /**
-     * Left padding. e.g.: Item with indentation 2 has mPaddingDP * 2 space on the left
+     * Left padding unit. e.g.: Item with indentation 2 has mPaddingDP * 2 space on the left
      */
     private int mPaddingDP = 10;
 
@@ -179,44 +186,48 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
         mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         if (sGroups == null)
             sGroups = new HashMap<ExpIndData, List<? extends ExpIndData>>();
-        if (sData == null) {
+        if (sData == null)
             sData = new ArrayList<ExpIndData>();
-        }
+    }
+
+    /**
+     * Item that has indentation = n, has n * paddingDP space on the left
+     * @param paddingDP The left padding base unit value in dp
+     */
+    public void setPaddingDP(int paddingDP) {
+        mPaddingDP = paddingDP;
     }
 
     public void add(ExpIndData item) {
-        if (sData == null) {
-            sData = new ArrayList<ExpIndData>();
-        }
         sData.add(item);
+        if (mNotifyOnChange) notifyDataSetChanged();
     }
 
-    public void addAll(List<? extends ExpIndData> data) {
-        if (sData == null)
-            sData = (List<ExpIndData>) data;
-        else
-            sData.addAll(data);
+    public void addAll(Collection<? extends ExpIndData> data) {
+        sData.addAll(data);
+        if (mNotifyOnChange) notifyDataSetChanged();
     }
 
     public void clear() {
         sData.clear();
         sGroups.clear();
+        if (mNotifyOnChange) notifyDataSetChanged();
     }
 
     public void insert(ExpIndData item, int index) {
         sData.add(index, item);
+        if (mNotifyOnChange) notifyDataSetChanged();
     }
 
     public void remove(ExpIndData item) {
         sData.remove(item);
         if (sGroups.containsKey(item))
             sGroups.remove(item);
+        if (mNotifyOnChange) notifyDataSetChanged();
     }
 
     @Override
     public int getCount() {
-        if (sData == null)
-            return 0;
         return sData.size();
     }
 
@@ -334,6 +345,30 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
     }
 
     /**
+     * Control whether methods that change the list ({@link #add},
+     * {@link #insert}, {@link #remove}, {@link #clear}) automatically call
+     * {@link #notifyDataSetChanged}. If set to false, caller must
+     * manually call notifyDataSetChanged() to have the changes
+     * reflected in the attached view.
+     *
+     * The default is true, and calling notifyDataSetChanged()
+     * resets the flag to true.
+     *
+     * @param notifyOnChange if true, modifications to the list will
+     * automatically call {@link
+     * #notifyDataSetChanged}
+     */
+    public void setNotifyOnChange(boolean notifyOnChange) {
+        mNotifyOnChange = notifyOnChange;
+    }
+
+    @Override
+    public void notifyDataSetChanged() {
+        super.notifyDataSetChanged();
+        mNotifyOnChange = true;
+    }
+
+    /**
      * Returns the {@link ViewBinder} used to bind data to item views.
      *
      * @return a ViewBinder or null if the binder does not exist
@@ -445,7 +480,7 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
         firstItem.setIsGroup(false);
         firstItem.setGroupSize(0);
 
-        notifyDataSetChanged();
+        if (mNotifyOnChange) notifyDataSetChanged();
     }
 
     /**
@@ -471,7 +506,7 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
             group.add(item);
             groupSize++;
             // stop when the item is a leaf or a group
-            if (!item.getChildren().isEmpty() && !item.isGroup()) {
+            if (item.getChildren() != null && !item.getChildren().isEmpty() && !item.isGroup()) {
                 for (ExpIndData i : item.getChildren()) {
                     stack.add(i);
                 }
@@ -484,7 +519,7 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
         firstItem.setIsGroup(true);
         firstItem.setGroupSize(groupSize);
 
-        notifyDataSetChanged();
+        if (mNotifyOnChange) notifyDataSetChanged();
     }
 
     /**
