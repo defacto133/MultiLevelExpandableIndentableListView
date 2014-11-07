@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/g_color_band"
+        android:layout_width="10dp"
+        android:layout_height="match_parent"
+        android:background="#ff0000"/>
+
+    <LinearLayout
+        android:orientation="vertical" android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp">
+            <TextView
+                android:id="@+id/author_g_textview"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:textColor="#ff0000"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:layout_weight="1"
+                android:text="author"/>
+
+            <TextView
+                android:id="@+id/hidden_comments_count_textview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#ffffff"
+                android:textStyle="bold"
+                android:background="#00ff00"
+                android:padding="5dp"
+                android:text="10 hidden"/>
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/comment_g_textview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:paddingLeft="15dp"
+            android:text="comment"/>
+
+    </LinearLayout>
+</LinearLayout>
