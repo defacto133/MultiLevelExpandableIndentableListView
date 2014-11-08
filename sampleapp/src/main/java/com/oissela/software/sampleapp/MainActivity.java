@@ -95,9 +95,16 @@ public class MainActivity extends ActionBarActivity {
         private static final int[] toG = {R.id.author_g_textview, R.id.comment_g_textview,
                 R.id.g_color_band, R.id.hidden_comments_count_textview};
 
+        private static final String ADAPTER_PARCEL_KEY = "adapter_parcel_key";
+
         private MultiLevelExpIndListAdapter mAdapter;
         private ListView mListView;
 
+        /**
+         * In this example comments are saved using a static field. A better solution would be
+         * to make the class that contains the data to implement Parcelable and save the data
+         * in the Bundle in onSaveInstanceState.
+         */
         private static List<MyComment> sComments;
 
         @Override
@@ -124,6 +131,10 @@ public class MainActivity extends ActionBarActivity {
             if (savedInstanceState == null) {
                 sComments = getDummyData();
                 mAdapter.addAll(sComments);
+            } else {
+                mAdapter.addAll(sComments);
+                ArrayList<Integer> groups = savedInstanceState.getIntegerArrayList(ADAPTER_PARCEL_KEY);
+                mAdapter.restoreGroups(groups);
             }
 
             // the author and comment data are simple strings that can be displayed directly,
@@ -151,6 +162,12 @@ public class MainActivity extends ActionBarActivity {
                 }
             });
             return rootView;
+        }
+
+        @Override
+        public void onSaveInstanceState(Bundle outState) {
+            super.onSaveInstanceState(outState);
+            outState.putIntegerArrayList(ADAPTER_PARCEL_KEY, mAdapter.saveGroups());
         }
 
         private List<MyComment> getDummyData() {
@@ -200,8 +217,6 @@ public class MainActivity extends ActionBarActivity {
          * Class that represents a comment
          */
         private static class MyComment implements MultiLevelExpIndListAdapter.ExpIndData {
-            private String mAuthor;
-            private String mComment;
             private int mIndentation;
             private List<MyComment> mChildren;
             private boolean mIsGroup;
@@ -209,8 +224,6 @@ public class MainActivity extends ActionBarActivity {
             private Map<String, String> mData;
 
             public MyComment(String author, String comment) {
-                mAuthor = author;
-                mComment = comment;
                 mChildren = new ArrayList<MyComment>();
                 mData = new HashMap<String, String>();
 

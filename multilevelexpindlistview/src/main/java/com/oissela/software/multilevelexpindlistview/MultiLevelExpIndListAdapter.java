@@ -20,17 +20,26 @@ import java.util.Map;
 
 /**
  * Multi-level expandable indentable list adapter.
- * Initially all elements in the list are single items. When you click on an item, all its
- * descendants are collapsed and the item clicked becomes a group. When you click on a group,
- * the descendants are shown again, but groups inside other groups are kept collapsed.
+ * Initially all elements in the list are single items. When you want to collapse an item and all its
+ * descendants call {@link #collapseGroup(int)}. When you want to exapand a group call {@link #expandGroup(int)}.
+ * Note that groups inside other groups are kept collapsed.
+ *
+ * To collapse an item and all its descendants or expand a group at a certain position
+ * you can call {@link #toggleGroup(int)}.
  *
  * The way the data is put in the item/group views is similar to the method used by SimpleAdapter,
- * but in this case there are 2 views.
+ * but in this case there are 2 views. If you have more than two views you can extend this class
+ * and override {@link #getView(int, android.view.View, android.view.ViewGroup)},
+ * {@link #getViewTypeCount()} and {@link #getItemViewType(int)}.
  *
- * Data and the groups are static fields so that state is preserved when a configuration
- * change happens (e.g. screen rotation).
+ * To preserve state (i.e. which items are collapsed) when a configuration change happens (e.g. screen rotation)
+ * you should call {@link #saveGroups()} inside onSaveInstanceState and save the returned value into
+ * the Bundle. When the activity/fragment is recreated you can call {@link #restoreGroups(java.util.ArrayList)}
+ * to restore the previous state. The actual data (e.g. the comments in the sample app) is not preserved,
+ * so you should save it yourself with a static field or implementing Parcelable or
+ * saving data to a file or something like that.
  */
-public class MultiLevelExpIndListAdapter extends BaseAdapter  {
+public class MultiLevelExpIndListAdapter extends BaseAdapter {
     /**
      * View type of a single item.
      */
@@ -42,11 +51,12 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
 
     /**
      * Indicates whether or not {@link #notifyDataSetChanged()} must be called whenever
-     * {@link #sData} is modified.
+     * {@link #mData} is modified.
      */
     private boolean mNotifyOnChange = true;
 
     private final Context mContext;
+
     /**
      * Layout of the items.
      */
@@ -55,6 +65,7 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
      * Layout of the groups.
      */
     private final int mResourceGroup;
+
     /**
      * Map an index i to a key k.
      */
@@ -71,28 +82,33 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
      * Map an index i to a resource id of a View contained in a group view.
      */
     private final int[] mToG;
+
     /**
      * List of items.
      */
-    private static List<ExpIndData> sData;
+    private List<ExpIndData> mData;
+
     /**
      * Map an item to the relative group.
      * e.g.: if the user click on item 6 then mGroups(item(6)) = {all items/groups below item 6}
      */
-    private static Map<ExpIndData, List<? extends ExpIndData>> sGroups;
-    private final LayoutInflater mInflater;
+    private Map<ExpIndData, List<? extends ExpIndData>> mGroups;
+
+    private LayoutInflater mInflater;
+
     /**
      * View documentation for MultiLevelExpIndListAdapter.ViewBinder
      */
     private ViewBinder mItemViewBinder;
     private ViewBinder mGroupViewBinder;
-    /**
-     * Left padding unit. e.g.: Item with indentation 2 has mPaddingDP * 2 space on the left
-     */
-    private int mPaddingDP = 10;
 
     /**
-     * Interface that every item has to implements.
+     * Left padding unit. e.g.: Item with indentation 2 has mPaddingDP * 2 space on the left.
+     */
+    private int mPaddingDP = 5;
+
+    /**
+     * Interface that every item has to implement.
      */
     public interface ExpIndData {
         /**
@@ -110,10 +126,12 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
          */
         void setIsGroup(boolean value);
 
-        /**
+        /** If you extend MultiLevelExpIndListAdapter and override {@link #getView(int, android.view.View, android.view.ViewGroup)}
+         * this data will not be used so you can return null. Otherwise it should return the data
+         * to display in the views.
          * @return A map that associate to every key k (they keys are in the array fromI/fromG)
          *         some object. If this object is a string, or can be cast into a string, it
-         *         will be show in the relative resource id (the resource ids are in the array toI/toG).
+         *         will be shown in the relative resource id (the resource ids are in the array toI/toG).
          *         If the object is complex use ViewBinder.
          */
         Map<String, ?> getData();
@@ -184,14 +202,14 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
         mToG = toG;
 
         mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        if (sGroups == null)
-            sGroups = new HashMap<ExpIndData, List<? extends ExpIndData>>();
-        if (sData == null)
-            sData = new ArrayList<ExpIndData>();
+
+        mGroups = new HashMap<ExpIndData, List<? extends ExpIndData>>();
+        mData = new ArrayList<ExpIndData>();
     }
 
     /**
-     * Item that has indentation = n, has n * paddingDP space on the left
+     * Item that has indentation = n, has n * paddingDP space on the left.
+     * Default value is 5dp.
      * @param paddingDP The left padding base unit value in dp
      */
     public void setPaddingDP(int paddingDP) {
@@ -199,41 +217,41 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
     }
 
     public void add(ExpIndData item) {
-        sData.add(item);
+        mData.add(item);
         if (mNotifyOnChange) notifyDataSetChanged();
     }
 
     public void addAll(Collection<? extends ExpIndData> data) {
-        sData.addAll(data);
+        mData.addAll(data);
         if (mNotifyOnChange) notifyDataSetChanged();
     }
 
     public void clear() {
-        sData.clear();
-        sGroups.clear();
+        mData.clear();
+        mGroups.clear();
         if (mNotifyOnChange) notifyDataSetChanged();
     }
 
     public void insert(ExpIndData item, int index) {
-        sData.add(index, item);
+        mData.add(index, item);
         if (mNotifyOnChange) notifyDataSetChanged();
     }
 
     public void remove(ExpIndData item) {
-        sData.remove(item);
-        if (sGroups.containsKey(item))
-            sGroups.remove(item);
+        mData.remove(item);
+        if (mGroups.containsKey(item))
+            mGroups.remove(item);
         if (mNotifyOnChange) notifyDataSetChanged();
     }
 
     @Override
     public int getCount() {
-        return sData.size();
+        return mData.size();
     }
 
     @Override
     public ExpIndData getItem(int i) {
-        return sData.get(i);
+        return mData.get(i);
     }
 
     @Override
@@ -293,7 +311,7 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
     }
 
     private void bindView(int position, View view, String[] from, int[] to, ViewBinder binder) {
-        final Map dataSet = sData.get(position).getData();
+        final Map dataSet = mData.get(position).getData();
         if (dataSet == null) {
             return;
         }
@@ -463,7 +481,7 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
 
     /**
      * Expand the group at position "posititon".
-     * @param position The position of the group that has to expanded
+     * @param position The position of the group that has to be expanded
      */
     public void expandGroup(int position) {
         ExpIndData firstItem = getItem(position);
@@ -473,9 +491,9 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
         }
 
         // get the group of the descendants of firstItem
-        List<? extends ExpIndData> group = sGroups.remove(firstItem);
+        List<? extends ExpIndData> group = mGroups.remove(firstItem);
 
-        sData.addAll(position + 1, group);
+        mData.addAll(position + 1, group);
 
         firstItem.setIsGroup(false);
         firstItem.setGroupSize(0);
@@ -485,7 +503,7 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
 
     /**
      * Collapse the descendants of the item at position "position".
-     * @param position The position of the element that has to collapsed
+     * @param position The position of the element that has to be collapsed
      */
     public void collapseGroup(int position) {
         ExpIndData firstItem = getItem(position);
@@ -499,7 +517,8 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
         List<ExpIndData> stack = new ArrayList<ExpIndData>();
         int groupSize = 0;
 
-        stack.addAll(firstItem.getChildren());
+        for (int i = firstItem.getChildren().size() - 1; i >= 0; i--)
+            stack.add(firstItem.getChildren().get(i));
 
         while (!stack.isEmpty()) {
             ExpIndData item = stack.remove(stack.size() - 1);
@@ -507,15 +526,14 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
             groupSize++;
             // stop when the item is a leaf or a group
             if (item.getChildren() != null && !item.getChildren().isEmpty() && !item.isGroup()) {
-                for (ExpIndData i : item.getChildren()) {
-                    stack.add(i);
-                }
+                for (int i = item.getChildren().size() - 1; i >= 0; i--)
+                    stack.add(item.getChildren().get(i));
             }
 
-            sData.remove(item);
+            mData.remove(item);
         }
 
-        sGroups.put(firstItem, group);
+        mGroups.put(firstItem, group);
         firstItem.setIsGroup(true);
         firstItem.setGroupSize(groupSize);
 
@@ -524,6 +542,7 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
 
     /**
      * Collpase/expand the item at position "position"
+     * @param position The position of the element that has to be collapsed/expanded
      */
     public void toggleGroup(int position) {
         if (getItem(position).isGroup()){
@@ -531,5 +550,39 @@ public class MultiLevelExpIndListAdapter extends BaseAdapter  {
         } else {
             collapseGroup(position);
         }
+    }
+
+    /**
+     * In onSaveInstanceState, save the groups' indices returned by this function in the Bundle so that later
+     * they can be restored using {@link #restoreGroups(java.util.ArrayList)}. saveGroups()
+     * expand all the groups so you should call this function only inside onSaveInstanceState.
+     * @return A list of indices of items that are groups.
+     */
+    public ArrayList<Integer> saveGroups() {
+        boolean notify = mNotifyOnChange;
+        mNotifyOnChange = false;
+        ArrayList<Integer> groupsIndices = new ArrayList<Integer>();
+        for (int i = 0; i < mData.size(); i++) {
+            if (mData.get(i).isGroup()) {
+                expandGroup(i);
+                groupsIndices.add(i);
+            }
+        }
+        mNotifyOnChange = notify;
+        return groupsIndices;
+    }
+
+    /**
+     * Call this function to restore the groups that were collapsed before the configuration change
+     * happened (e.g. screen rotation). See {@link #saveGroups()}.
+     * @param groupsNum The list of indices of items that are groups and should be collapsed.
+     */
+    public void restoreGroups(ArrayList<Integer> groupsNum) {
+        boolean notify = mNotifyOnChange;
+        mNotifyOnChange = false;
+        for (int i = groupsNum.size() - 1; i >= 0; i--) {
+            collapseGroup(groupsNum.get(i));
+        }
+        mNotifyOnChange = notify;
     }
 }
