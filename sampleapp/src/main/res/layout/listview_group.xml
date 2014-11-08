@@ -7,7 +7,7 @@
 
     <FrameLayout
         android:id="@+id/g_color_band"
-        android:layout_width="10dp"
+        android:layout_width="5dp"
         android:layout_height="match_parent"
         android:background="#ff0000"/>
 
