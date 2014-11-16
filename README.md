@@ -4,9 +4,23 @@ This library display hierarchical data (e.g. comments) in a list view, so that t
 
 Here's a video of the SampleApp demo
 
-[![Screenshot of the demo](http://img.youtube.com/vi/dweRJ4Ukb0Q/0.jpg)](http://www.youtube.com/watch?v=dweRJ4Ukb0Q)
+[![Screenshot of the demo](http://img.youtube.com/vi/vZoNEck1uJk/0.jpg)](http://youtu.be/vZoNEck1uJk)
 
 ### How to import the library in your probject
+
+There are three ways to import the library. The easiest way is:
+
+1. Clone the repository
+
+   `$ git clone https://github.com/defacto133/MultiLevelExpandableIndentableListView.git`
+   
+2. Add these two lines to your settings.gradle file
+
+   `include ':multilevelexpindlistview'`
+   
+   `project(':multilevelexpindlistview').projectDir = new File('<path-to-cloned-repo>/MultiLevelExpandableIndentableListView/multilevelexpindlistview')`
+
+An alternative way is this :
 
 1. Clone the repository
 
@@ -22,7 +36,7 @@ Here's a video of the SampleApp demo
 9. Click on the top right green cross and select Module dependency
 10. Select :multilevelexpindlistview
 
-Alternatively you can import just the aar file:
+If you just to import the aar file:
 
 1. Clone the repository
 
@@ -50,3 +64,8 @@ Alternatively you can import just the aar file:
 8. Now in the Modules listing you see a new module multilevelexpindlistview. In the Modules listing select your project module (usually is called app) and click on Dependencies.
 9. Click on the top right green cross and select Module dependency
 10. Select :multilevelexpindlistview
+
+### Usage
+
+You should extend the abstract class `MultiLevelExpIndListAdapter` (see `MyAdapter.java` in `sampleapp` for an example).
+The data that you pass to your `MultiLevelExpIndListAdapter` should implement the interface `MultiLevelExpIndListAdapter.ExpIndData` (see `MyComment.java` in `sampleapp` for an example).
