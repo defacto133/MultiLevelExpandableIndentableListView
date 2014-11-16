@@ -1,6 +1,6 @@
 # MultiLevelExpandableIndentableListView
-
-This library display hierarchical data (e.g. comments) in a list view, so that the user can collapse and expand elements. Every element is indented accordingly to its level in the hierarchy.
+ 
+This component is an adapter that can handle hierarchical data (e.g. comments) in a `RecyclerView`, so that the user can collapse and expand elements inside the hierarchy.
 
 Here's a video of the SampleApp demo
 
@@ -8,13 +8,13 @@ Here's a video of the SampleApp demo
 
 ### How to import the library in your probject
 
-There are three ways to import the library. The easiest way is:
+There are three ways to import the library. The easiest way is this:
 
 1. Clone the repository
 
    `$ git clone https://github.com/defacto133/MultiLevelExpandableIndentableListView.git`
    
-2. Add these two lines to your settings.gradle file
+2. Add these two lines to your `settings.gradle` file
 
    `include ':multilevelexpindlistview'`
    
@@ -36,7 +36,7 @@ An alternative way is this :
 9. Click on the top right green cross and select Module dependency
 10. Select :multilevelexpindlistview
 
-If you just to import the aar file:
+If you just want to import the aar file:
 
 1. Clone the repository
 
@@ -67,5 +67,5 @@ If you just to import the aar file:
 
 ### Usage
 
-You should extend the abstract class `MultiLevelExpIndListAdapter` (see `MyAdapter.java` in `sampleapp` for an example).
+You should extend the abstract class `MultiLevelExpIndListAdapter` (see `MyAdapter.java` in `sampleapp` for an example) and then associate your adapter with a `RecyclerViw`.
 The data that you pass to your `MultiLevelExpIndListAdapter` should implement the interface `MultiLevelExpIndListAdapter.ExpIndData` (see `MyComment.java` in `sampleapp` for an example).
