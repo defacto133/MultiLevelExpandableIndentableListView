@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal">
+
+    <View
+        android:id="@+id/color_band"
+        android:layout_width="5dp"
+        android:layout_height="match_parent"
+        android:background="#ff0000"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="?android:attr/listPreferredItemHeight"
+        android:background="@drawable/touch_selector">
+
+        <TextView
+            android:id="@+id/hidden_comments_count_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#ffffff"
+            android:textStyle="bold"
+            android:background="#00ff00"
+            android:padding="5dp"
+            android:layout_margin="16dp"
+            android:text="10 hidden"
+            android:layout_alignParentRight="true"/>
+
+        <TextView
+            android:id="@+id/author_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#ff0000"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="author"
+            android:layout_alignBaseline="@id/hidden_comments_count_textview"
+            android:padding="16dp"/>
+
+        <TextView
+            android:id="@+id/comment_textview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:paddingBottom="16dp"
+            android:layout_below="@id/author_textview"
+            android:text="comment"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?android:attr/listDivider"
+            android:layout_below="@id/comment_textview"/>
+
+    </RelativeLayout>
+</LinearLayout>

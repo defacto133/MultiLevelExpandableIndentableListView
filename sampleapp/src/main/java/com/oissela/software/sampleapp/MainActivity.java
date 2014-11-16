@@ -1,27 +1,28 @@
 package com.oissela.software.sampleapp;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ListView;
 
-import com.oissela.software.multilevelexpindlistview.MultiLevelExpIndListAdapter;
+import com.oissela.software.sampleapp.model.MyComment;
+import com.oissela.software.sampleapp.model.MyContent;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+/**
+ * An example that shows how to use MultiLevelExpIndListAdapter to display some content at
+ * the top of a list (in this case a lorem ipsum string) and some comments at the bottom.
+ */
 public class MainActivity extends ActionBarActivity {
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,7 +33,6 @@ public class MainActivity extends ActionBarActivity {
                     .commit();
         }
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -56,121 +56,58 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    /**
-     * An example that shows how to use MultiLevelExpIndListAdapter to display some comments.
-     *
-     * The item view (listview_item.xml) and group view (listview_group.xml) have both an author
-     * and comment field and a vertical colored bar to show the indentation.
-     * The group view has on the top right a field that shows the number of items in the groups.
-     */
     public static class ListViewFragment extends Fragment {
-        // indexes
-        private static final int ITEM_AUTHOR = 0;
-        private static final int ITEM_COMMENT = 1;
-        private static final int ITEM_INDENT_COLOR = 2;
-        // keys
-        private static final String ITEM_AUTHOR_KEY = "item_author_key";
-        private static final String ITEM_COMMENT_KEY = "item_comment_key";
-        private static final String ITEM_INDENT_COLOR_KEY = "item_ind_color_key";
+        private static final String GROUPS_KEY = "groups_key";
 
-        private static final String[] fromI = {ITEM_AUTHOR_KEY, ITEM_COMMENT_KEY, ITEM_INDENT_COLOR_KEY};
-        private static final int[] toI = {R.id.author_textview, R.id.comment_textview, R.id.color_band};
-
-        private static final String[] indColors = {"#000000", "#3366FF", "#E65CE6",
-                "#E68A5C", "#00E68A", "#CCCC33"};
-
-        // indexes
-        private static final int GROUP_AUTHOR = 0;
-        private static final int GROUP_COMMENT = 1;
-        private static final int GROUP_INDENT_COLOR = 2;
-        private static final int GROUP_HIDDEN_CNT = 3;
-        // keys
-        private static final String GROUP_AUTHOR_KEY = "group_author_key";
-        private static final String GROUP_COMMENT_KEY = "group_comment_key";
-        private static final String GROUP_INDENT_COLOR_KEY = "group_ind_color_key";
-        private static final String GROUP_HIDDEN_CNT_KEY = "group_hidden_cnt_key";
-
-        private static final String[] fromG = {GROUP_AUTHOR_KEY, GROUP_COMMENT_KEY,
-                GROUP_INDENT_COLOR_KEY, GROUP_HIDDEN_CNT_KEY};
-        private static final int[] toG = {R.id.author_g_textview, R.id.comment_g_textview,
-                R.id.g_color_band, R.id.hidden_comments_count_textview};
-
-        private static final String ADAPTER_PARCEL_KEY = "adapter_parcel_key";
-
-        private MultiLevelExpIndListAdapter mAdapter;
-        private ListView mListView;
-
-        /**
-         * In this example comments are saved using a static field. A better solution would be
-         * to make the class that contains the data to implement Parcelable and save the data
-         * in the Bundle in onSaveInstanceState.
-         */
-        private static List<MyComment> sComments;
-
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-        }
+        private MyAdapter mAdapter;
+        private RecyclerView mRecyclerView;
+        private LinearLayoutManager mLayoutManager;
 
         @Nullable
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+            // code copied from https://developer.android.com/training/material/lists-cards.html
+            mRecyclerView = (RecyclerView) rootView.findViewById(R.id.content_recyclerview);
 
-            mListView = (ListView) rootView.findViewById(R.id.content_listview);
+            mRecyclerView.setHasFixedSize(true);
 
-            // item view
-            int resourceItem = R.layout.listview_item;
-            // group view
-            int resourceGroup = R.layout.listview_group;
+            mLayoutManager = new LinearLayoutManager(getActivity());
+            mRecyclerView.setLayoutManager(mLayoutManager);
 
-            mAdapter = new MultiLevelExpIndListAdapter(getActivity(),
-                    resourceItem, fromI, toI,
-                    resourceGroup, fromG, toG);
+            mAdapter = new MyAdapter(getActivity(), new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int position = mRecyclerView.getChildPosition(v);
+                    mAdapter.toggleGroup(position);
+                }
+            });
+            mRecyclerView.setAdapter(mAdapter);
 
-            if (savedInstanceState == null) {
-                sComments = getDummyData();
-                mAdapter.addAll(sComments);
-            } else {
-                mAdapter.addAll(sComments);
-                ArrayList<Integer> groups = savedInstanceState.getIntegerArrayList(ADAPTER_PARCEL_KEY);
+            MyContent content = getDummyContent();
+            mAdapter.add(content);
+            List<MyComment> comments = getDummyComments();
+            mAdapter.addAll(comments);
+
+            if (savedInstanceState != null) {
+                List<Integer> groups = savedInstanceState.getIntegerArrayList(GROUPS_KEY);
                 mAdapter.restoreGroups(groups);
             }
 
-            // the author and comment data are simple strings that can be displayed directly,
-            // the data is a string that represents a color and so has to be parsed in this ViewBinder
-            MultiLevelExpIndListAdapter.ViewBinder vb = new MultiLevelExpIndListAdapter.ViewBinder() {
-                @Override
-                public boolean setViewValue(View view, Object data, String textRepresentation) {
-                    if (view.getId() == R.id.color_band || view.getId() == R.id.g_color_band) {
-                        String color = (String) data;
-                        view.setBackgroundColor(Color.parseColor(color));
-                        return true;
-                    }
-                    return false;
-                }
-            };
-            mAdapter.setItemViewBinder(vb);
-            mAdapter.setGroupViewBinder(vb);
-
-            mListView.setAdapter(mAdapter);
-
-            mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> adapterView, final View view, int i, long l) {
-                    mAdapter.toggleGroup(i);
-                }
-            });
             return rootView;
         }
 
         @Override
         public void onSaveInstanceState(Bundle outState) {
+            outState.putIntegerArrayList(GROUPS_KEY, mAdapter.saveGroups());
             super.onSaveInstanceState(outState);
-            outState.putIntegerArrayList(ADAPTER_PARCEL_KEY, mAdapter.saveGroups());
         }
 
-        private List<MyComment> getDummyData() {
+        private MyContent getDummyContent() {
+            return new MyContent("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam sed odio scelerisque, condimentum neque non, venenatis neque. Mauris nec feugiat felis, id porta nibh. In hac habitasse platea dictumst. Phasellus egestas rutrum justo, sit amet pharetra nulla egestas non. Vivamus ultricies ligula id mauris viverra, mattis volutpat turpis hendrerit. In hac habitasse platea dictumst. Nulla congue, lorem eu placerat luctus, metus lacus convallis est, non porta tellus nisi ut neque. Pellentesque posuere gravida tincidunt. Maecenas aliquet, nulla id vestibulum elementum, enim leo mattis ipsum, in lobortis quam enim pretium justo.");
+        }
+
+        private List<MyComment> getDummyComments() {
             List<MyComment> comments = new ArrayList<MyComment>();
             comments.add(new MyComment("poopsliquid", "You'd think that after he was pulled on the ground by the machine he might take a break and reevaluate his choices."));
             comments.add(new MyComment("Nizzler", "that's what a skinny little weakling would do. You a skinny little weakling, /u/poopsliquid?"));
@@ -211,72 +148,6 @@ public class MainActivity extends ActionBarActivity {
             comments.add(new MyComment("leeboof", "Not even one..."));
             comments.get(18).addChild(comments.get(19));
             return comments;
-        }
-
-        /**
-         * Class that represents a comment
-         */
-        private static class MyComment implements MultiLevelExpIndListAdapter.ExpIndData {
-            private int mIndentation;
-            private List<MyComment> mChildren;
-            private boolean mIsGroup;
-            private int mGroupSize;
-            private Map<String, String> mData;
-
-            public MyComment(String author, String comment) {
-                mChildren = new ArrayList<MyComment>();
-                mData = new HashMap<String, String>();
-
-                mData.put(fromI[ITEM_AUTHOR], author);
-                mData.put(fromI[ITEM_COMMENT], comment);
-
-                mData.put(fromG[GROUP_AUTHOR], author);
-                mData.put(fromG[GROUP_COMMENT], comment);
-
-                setIndentation(0);
-            }
-
-            @Override
-            public List<? extends MultiLevelExpIndListAdapter.ExpIndData> getChildren() {
-                return mChildren;
-            }
-
-            @Override
-            public boolean isGroup() {
-                return mIsGroup;
-            }
-
-            @Override
-            public void setIsGroup(boolean value) {
-                mIsGroup = value;
-            }
-
-            @Override
-            public int getIndentation() {
-                return mIndentation;
-            }
-
-            @Override
-            public Map<String, ?> getData() {
-                return mData;
-            }
-
-            @Override
-            public void setGroupSize(int groupSize) {
-                mGroupSize = groupSize;
-                mData.put(fromG[GROUP_HIDDEN_CNT], "+ " + Integer.toString(mGroupSize));
-            }
-
-            public void addChild(MyComment child) {
-                mChildren.add(child);
-                child.setIndentation(getIndentation() + 1);
-            }
-
-            private void setIndentation(int indentation) {
-                mIndentation = indentation;
-                mData.put(fromI[ITEM_INDENT_COLOR], indColors[mIndentation]);
-                mData.put(fromG[GROUP_INDENT_COLOR], indColors[mIndentation]);
-            }
         }
     }
 }
