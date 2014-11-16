@@ -123,6 +123,7 @@ public class MyAdapter extends MultiLevelExpIndListAdapter {
 
                 if (comment.getIndentation() == 0) {
                     cvh.colorBand.setVisibility(View.GONE);
+                    cvh.setPaddingLeft(0);
                 } else {
                     cvh.colorBand.setVisibility(View.VISIBLE);
                     cvh.setColorBandColor(comment.getIndentation());
